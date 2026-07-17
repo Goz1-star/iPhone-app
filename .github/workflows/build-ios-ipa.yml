@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1"
           yes | sdkmanager --licenses >/dev/null || true
 
       - name: Set up Flutter
@@ -44,6 +44,16 @@ jobs:
 
       - name: Generate platform files
         run: flutter create . --platforms=ios,android --project-name facai --org com.guoyaojun
+
+      - name: Configure Android SDK level
+        run: |
+          if [ -f android/app/build.gradle.kts ]; then
+            perl -0pi -e 's/compileSdk = flutter\.compileSdkVersion/compileSdk = 35/g' android/app/build.gradle.kts
+          fi
+          if [ -f android/app/build.gradle ]; then
+            perl -0pi -e 's/compileSdkVersion flutter\.compileSdkVersion/compileSdkVersion 35/g' android/app/build.gradle
+          fi
+          grep -R "compileSdk" android/app
 
       - name: Remove generated template tests
         run: rm -f test/widget_test.dart
