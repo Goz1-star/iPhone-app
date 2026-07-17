@@ -99,10 +99,26 @@ jobs:
 
       - name: Package unsigned IPA
         run: |
+          set -euo pipefail
           mkdir -p build/ios/ipa_unsigned/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios/ipa_unsigned/Payload/
           cd build/ios/ipa_unsigned
-          zip -qry Facai.ipa Payload
+          test -f Payload/Runner.app/Info.plist
+          test -f Payload/Runner.app/Runner
+          rm -f Facai.ipa
+          ditto -c -k --sequesterRsrc --keepParent Payload Facai.ipa
+          unzip -l Facai.ipa | tee ipa-contents.txt
+          grep -q 'Payload/Runner.app/Info.plist' ipa-contents.txt
+          grep -q 'Payload/Runner.app/Runner' ipa-contents.txt
+
+      - name: Upload IPA structure log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa-structure-log
+          path: build/ios/ipa_unsigned/ipa-contents.txt
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
