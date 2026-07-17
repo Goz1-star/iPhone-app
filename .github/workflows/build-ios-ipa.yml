@@ -159,8 +159,22 @@ jobs:
 
       - name: Build Android APK
         run: |
-          set -o pipefail
-          flutter build apk --release 2>&1 | tee flutter-android-build.log
+          set +e
+          {
+            echo "=== Android Gradle config ==="
+            grep -R "compileSdk\\|targetSdk\\|minSdk" android/app || true
+            echo "=== Flutter build apk ==="
+          } | tee flutter-android-build.log
+          flutter build apk --release 2>&1 | tee -a flutter-android-build.log
+          build_status=${PIPESTATUS[0]}
+          if [ "$build_status" -ne 0 ]; then
+            {
+              echo
+              echo "=== Gradle stacktrace retry ==="
+            } | tee -a flutter-android-build.log
+            (cd android && ./gradlew app:assembleRelease --stacktrace --info) 2>&1 | tee -a ../flutter-android-build.log
+            exit "$build_status"
+          fi
           mkdir -p build/android/apk
           cp build/app/outputs/flutter-apk/app-release.apk build/android/apk/Facai.apk
           test -f build/android/apk/Facai.apk
