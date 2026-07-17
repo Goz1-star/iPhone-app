@@ -80,6 +80,12 @@ jobs:
       - name: Summarize iOS build failure
         if: failure()
         run: |
+          while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            line="${line//$'\n'/'%0A'}"
+            line="${line//$'\r'/'%0D'}"
+            echo "::error title=iOS build log::$line"
+          done < <(tail -80 flutter-ios-build.log)
           echo "::group::Flutter iOS build log tail"
           tail -120 flutter-ios-build.log
           echo "::endgroup::"
