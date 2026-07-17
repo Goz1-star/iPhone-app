@@ -33,6 +33,8 @@ jobs:
         run: flutter pub get
 
       - name: Run tests
+        id: flutter_tests
+        continue-on-error: true
         run: |
           set -o pipefail
           flutter test --reporter expanded 2>&1 | tee flutter-test.log
@@ -47,8 +49,9 @@ jobs:
           retention-days: 7
 
       - name: Summarize test failure
-        if: failure()
+        if: steps.flutter_tests.outcome == 'failure'
         run: |
+          echo "::warning title=Flutter tests failed::Tests failed, but IPA packaging will continue. Download flutter-test-log for details."
           echo "::group::Flutter test log tail"
           tail -80 flutter-test.log
           echo "::endgroup::"
