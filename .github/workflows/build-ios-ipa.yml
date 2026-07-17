@@ -6,6 +6,11 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      - 'dist/**'
+
+permissions:
+  contents: write
 
 jobs:
   build-ios-ipa:
@@ -127,3 +132,18 @@ jobs:
           path: build/ios/ipa_unsigned/Facai.ipa
           if-no-files-found: error
           retention-days: 14
+
+      - name: Commit IPA to repository
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp build/ios/ipa_unsigned/Facai.ipa dist/Facai.ipa
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/Facai.ipa
+          if git diff --cached --quiet; then
+            echo "Facai.ipa is unchanged."
+          else
+            git commit -m "Add generated Facai IPA [skip ci]"
+            git push
+          fi
