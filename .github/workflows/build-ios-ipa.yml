@@ -22,6 +22,12 @@ jobs:
       - name: Check out project
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -29,7 +35,7 @@ jobs:
           cache: true
 
       - name: Generate iOS platform files
-        run: flutter create . --platforms=ios --project-name facai --org com.guoyaojun
+        run: flutter create . --platforms=ios,android --project-name facai --org com.guoyaojun
 
       - name: Remove generated template tests
         run: rm -f test/widget_test.dart
@@ -133,17 +139,59 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Commit IPA to repository
+      - name: Build Android APK
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee flutter-android-build.log
+          mkdir -p build/android/apk
+          cp build/app/outputs/flutter-apk/app-release.apk build/android/apk/Facai.apk
+          test -f build/android/apk/Facai.apk
+
+      - name: Upload Android build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-android-build-log
+          path: flutter-android-build.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Summarize Android build failure
+        if: failure()
+        run: |
+          if [ -f flutter-android-build.log ]; then
+            echo "::group::Flutter Android build log tail"
+            tail -120 flutter-android-build.log
+            echo "::endgroup::"
+            {
+              echo "### Flutter Android build failure"
+              echo
+              echo '```text'
+              tail -120 flutter-android-build.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Facai-android-apk
+          path: build/android/apk/Facai.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit installers to repository
         run: |
           set -euo pipefail
           mkdir -p dist
           cp build/ios/ipa_unsigned/Facai.ipa dist/Facai.ipa
+          cp build/android/apk/Facai.apk dist/Facai.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/Facai.ipa
+          git add dist/Facai.ipa dist/Facai.apk
           if git diff --cached --quiet; then
-            echo "Facai.ipa is unchanged."
+            echo "Installers are unchanged."
           else
-            git commit -m "Add generated Facai IPA [skip ci]"
+            git commit -m "Add generated Facai installers [skip ci]"
             git push
           fi
