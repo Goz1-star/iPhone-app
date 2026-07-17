@@ -164,6 +164,12 @@ jobs:
         if: failure()
         run: |
           if [ -f flutter-android-build.log ]; then
+            while IFS= read -r line; do
+              line="${line//'%'/'%25'}"
+              line="${line//$'\n'/'%0A'}"
+              line="${line//$'\r'/'%0D'}"
+              echo "::error title=Android build log::$line"
+            done < <(tail -80 flutter-android-build.log)
             echo "::group::Flutter Android build log tail"
             tail -120 flutter-android-build.log
             echo "::endgroup::"
