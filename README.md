@@ -17,7 +17,7 @@
 
 ## 运行
 
-当前机器没有检测到 Flutter SDK。安装 Flutter 后，在本目录执行：
+安装 Flutter 后，在本目录执行：
 
 ```powershell
 flutter create . --platforms=android,ios --project-name facai
