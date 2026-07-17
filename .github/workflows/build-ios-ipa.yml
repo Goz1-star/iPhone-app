@@ -31,6 +31,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1"
+          yes | sdkmanager --licenses >/dev/null || true
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -145,7 +150,6 @@ jobs:
       - name: Build Android APK
         run: |
           set -o pipefail
-          yes | sdkmanager --licenses >/dev/null || true
           flutter build apk --release 2>&1 | tee flutter-android-build.log
           mkdir -p build/android/apk
           cp build/app/outputs/flutter-apk/app-release.apk build/android/apk/Facai.apk
