@@ -49,11 +49,39 @@ jobs:
         run: |
           if [ -f android/app/build.gradle.kts ]; then
             perl -0pi -e 's/compileSdk = flutter\.compileSdkVersion/compileSdk = 36/g' android/app/build.gradle.kts
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/app/build.gradle.kts")
+          text = path.read_text()
+          if "isCoreLibraryDesugaringEnabled = true" not in text:
+              text = text.replace(
+                  "compileOptions {\n",
+                  "compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n",
+                  1,
+              )
+          if "coreLibraryDesugaring(" not in text:
+              text += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")\n}\n'
+          path.write_text(text)
+          PY
           fi
           if [ -f android/app/build.gradle ]; then
             perl -0pi -e 's/compileSdkVersion flutter\.compileSdkVersion/compileSdkVersion 36/g' android/app/build.gradle
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/app/build.gradle")
+          text = path.read_text()
+          if "coreLibraryDesugaringEnabled true" not in text:
+              text = text.replace(
+                  "compileOptions {",
+                  "compileOptions {\n        coreLibraryDesugaringEnabled true",
+                  1,
+              )
+          if "coreLibraryDesugaring " not in text:
+              text += "\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'\n}\n"
+          path.write_text(text)
+          PY
           fi
-          grep -R "compileSdk" android/app
+          grep -R "compileSdk\|CoreLibraryDesugaring\|coreLibraryDesugaring" android/app
 
       - name: Remove generated template tests
         run: rm -f test/widget_test.dart
