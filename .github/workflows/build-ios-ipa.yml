@@ -64,7 +64,32 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build iOS app without signing
-        run: flutter build ios --release --no-codesign
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign 2>&1 | tee flutter-ios-build.log
+
+      - name: Upload iOS build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-build-log
+          path: flutter-ios-build.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Summarize iOS build failure
+        if: failure()
+        run: |
+          echo "::group::Flutter iOS build log tail"
+          tail -120 flutter-ios-build.log
+          echo "::endgroup::"
+          {
+            echo "### Flutter iOS build failure"
+            echo
+            echo '```text'
+            tail -120 flutter-ios-build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Package unsigned IPA
         run: |
