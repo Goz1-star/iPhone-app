@@ -28,13 +28,16 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Generate iOS platform files
+      - name: Generate platform files
         run: flutter create . --platforms=ios,android --project-name facai --org com.guoyaojun
 
       - name: Remove generated template tests
@@ -142,6 +145,7 @@ jobs:
       - name: Build Android APK
         run: |
           set -o pipefail
+          yes | sdkmanager --licenses >/dev/null || true
           flutter build apk --release 2>&1 | tee flutter-android-build.log
           mkdir -p build/android/apk
           cp build/app/outputs/flutter-apk/app-release.apk build/android/apk/Facai.apk
