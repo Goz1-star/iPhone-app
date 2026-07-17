@@ -52,7 +52,7 @@ class IncomeCalculator {
     }
     final workdays = settings.monthlyWorkdays <= 0 ? 1 : settings.monthlyWorkdays;
     final salary = settings.dailySalary < 0 ? 0 : settings.dailySalary;
-    return salary * workdays;
+    return (salary * workdays).toDouble();
   }
 
   static IncomeSnapshot snapshot(AppSettings settings, DateTime now) {

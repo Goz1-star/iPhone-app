@@ -21,7 +21,7 @@ void main() {
       expect(IncomeCalculator.dailySalary(settings), 1000);
     });
 
-    test('keeps today's income at zero before work starts', () {
+    test("keeps today's income at zero before work starts", () {
       final result = IncomeCalculator.snapshot(
         settings,
         DateTime(2026, 7, 17, 8, 30),
