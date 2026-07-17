@@ -26,6 +26,9 @@ jobs:
       - name: Generate iOS platform files
         run: flutter create . --platforms=ios --project-name facai --org com.guoyaojun
 
+      - name: Remove generated template tests
+        run: rm -f test/widget_test.dart
+
       - name: Install dependencies
         run: flutter pub get
 
